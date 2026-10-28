@@ -64,8 +64,10 @@ export function createFlightPath(points, tubeRadius = 0.004) {
   return new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ vertexColors: true }))
 }
 
-// Text sprite (canvas texture) for start/end labels.
-export function createLabel(text, color = '#e3e8f0') {
+// Text sprite (canvas texture). With screenSpace, `height` is a fraction of
+// the viewport height (constant on-screen size); otherwise it is in scene units.
+// alwaysOnTop draws the label over the geometry instead of letting it be hidden.
+export function createLabel(text, { color = '#e3e8f0', height = 0.035, screenSpace = true, alwaysOnTop = false } = {}) {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
   const font = '600 44px Inter, system-ui, sans-serif'
@@ -80,9 +82,9 @@ export function createLabel(text, color = '#e3e8f0') {
   ctx.fillText(text, 16, 34)
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
-  // Constant on-screen size: scale is a fraction of the viewport height.
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthWrite: false, sizeAttenuation: false }))
-  const height = 0.035
+  const material = new THREE.SpriteMaterial({ map: texture, depthWrite: false, depthTest: !alwaysOnTop, sizeAttenuation: !screenSpace })
+  const sprite = new THREE.Sprite(material)
+  if (alwaysOnTop) sprite.renderOrder = 10
   sprite.scale.set((height * canvas.width) / canvas.height, height, 1)
   sprite.center.set(0, -0.3)
   return sprite

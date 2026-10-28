@@ -52,7 +52,7 @@ function EarthView({ result, route }) {
         </label>
       </div>
       <div className="viewOverlay viewLegend">
-        <HeatLegend />
+        <HeatLegend limit={{ temperature: result.verdict.materialLimit, label: `${result.verdict.materialName} limit` }} />
       </div>
       <div className="viewOverlay viewHint">Drag to rotate · scroll to zoom</div>
     </div>

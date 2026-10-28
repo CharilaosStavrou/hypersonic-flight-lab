@@ -5,10 +5,12 @@ import Notes from './components/Notes.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import SummaryCards from './components/SummaryCards.jsx'
 import Verdict from './components/Verdict.jsx'
+import ViewTabs from './components/ViewTabs.jsx'
 import { createDefaultModel } from './data/defaults.js'
 import { simulateFlight } from './physics/simulation.js'
 
 const EarthView = lazy(() => import('./components/EarthView.jsx'))
+const AircraftView = lazy(() => import('./components/AircraftView.jsx'))
 
 function runSimulation(model) {
   try {
@@ -20,6 +22,7 @@ function runSimulation(model) {
 
 function App() {
   const [model, setModel] = useState(createDefaultModel)
+  const [view, setView] = useState('earth')
   const { result, error } = useMemo(() => runSimulation(model), [model])
 
   const updateModel = (key, value) => setModel((current) => ({ ...current, [key]: value }))
@@ -44,9 +47,16 @@ function App() {
             <>
               <Verdict result={result} />
               <SummaryCards result={result} />
-              <Suspense fallback={<div className="view3d viewLoading">Loading 3D view…</div>}>
-                <EarthView result={result} route={model.route} />
-              </Suspense>
+              <section aria-label="3D view">
+                <ViewTabs active={view} onChange={setView} />
+                <Suspense fallback={<div className="view3d viewLoading">Loading 3D view…</div>}>
+                  {view === 'earth' ? (
+                    <EarthView result={result} route={model.route} />
+                  ) : (
+                    <AircraftView result={result} vehicle={model.vehicle} />
+                  )}
+                </Suspense>
+              </section>
               <Notes notes={result.notes} />
               <ChartsPanel result={result} />
             </>
