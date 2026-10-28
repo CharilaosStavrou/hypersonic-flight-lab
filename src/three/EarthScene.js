@@ -89,8 +89,9 @@ export class EarthScene {
       const position = new THREE.Vector3(...latLonToVector(lat, lon, 1.002))
       const marker = createMarker(color)
       marker.position.copy(position)
-      const text = createLabel(label)
+      const text = createLabel(label, { alwaysOnTop: true })
       text.position.copy(position)
+      text.userData.surfacePoint = position
       this.flightGroup.add(marker, text)
     }
     this.setTime(this.time)
@@ -148,6 +149,12 @@ export class EarthScene {
       this.camera.position.copy(this.aircraft.position).add(offset)
     }
     this.controls.update()
+    // Labels are drawn on top of the path, so hide each one while its point
+    // is behind the globe: a surface point p is visible when p · camera > 1.
+    for (const child of this.flightGroup.children) {
+      const point = child.userData.surfacePoint
+      if (point) child.visible = point.dot(this.camera.position) > 1
+    }
     // Keep the aircraft marker at a roughly constant on-screen size.
     const distance = this.camera.position.distanceTo(this.aircraft.position)
     this.aircraft.scale.setScalar(Math.min(1.5, Math.max(0.02, distance / 1.2)))
