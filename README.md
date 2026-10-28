@@ -244,8 +244,10 @@ src/data        defaults, materials, route presets, sample flights
 
 ## Related projects
 
-- [Production line simulator](https://github.com/CharilaosStavrou/line-simulatorv1): discrete-event simulation of a production line
-- More tools on [github.com/CharilaosStavrou](https://github.com/CharilaosStavrou)
+- **VSM Tool**: [repository](https://github.com/CharilaosStavrou/vsm-tool) · [live demo](https://vsm-tool-five.vercel.app)
+- **Kanban Calculator**: [repository](https://github.com/CharilaosStavrou/kanban-calculator)
+- **Aggregate Planning**: [repository](https://github.com/CharilaosStavrou/aggregate-planning) · [live demo](https://aggregate-planning.vercel.app)
+- **Production Line Simulator**: [repository](https://github.com/CharilaosStavrou/line-simulatorv1) · [live demo](https://line-simulatorv1.vercel.app)
 
 ## Future improvements
 
