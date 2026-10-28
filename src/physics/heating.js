@@ -32,7 +32,7 @@ export function coldWallTemperature(heatFlux, emissivity) {
 // surroundings (taken at the ambient air temperature). Without it the
 // balance falls below T∞ at low speed and gives 0 K at Mach 0. With it,
 // Tw = T∞ at Mach 0 and T∞ ≤ Tw ≤ T0 at every Mach; at hypersonic speed the
-// term is negligible (≈ 0.01 % at Mach 10, 30 km).
+// term is negligible (≈ 0.002 % at Mach 10, 30 km).
 export function hotWallTemperature(heatFlux, emissivity, stagnationTemp, ambientTemp) {
   if (heatFlux <= 0 || stagnationTemp <= ambientTemp) return ambientTemp
   const residual = (tw) =>
