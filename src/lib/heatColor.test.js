@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { heatDomain, heatFraction, heatGradientCss, heatStops, temperatureToRgb } from './heatColor.js'
+import {
+  heatDomain,
+  heatFraction,
+  heatGradientCss,
+  heatStops,
+  legendTicks,
+  temperatureToRgb,
+  visibleLegendTicks,
+} from './heatColor.js'
 
 describe('heat colour scale', () => {
   it('maps the domain ends to the first and last stops', () => {
@@ -41,5 +49,24 @@ describe('heat colour scale', () => {
     const css = heatGradientCss()
     expect(css.startsWith('linear-gradient(to right')).toBe(true)
     expect(css.match(/rgb\(/g)).toHaveLength(heatStops.length)
+  })
+})
+
+describe('legend ticks next to the limit marker', () => {
+  it('shows every tick without a limit', () => {
+    expect(visibleLegendTicks()).toEqual(legendTicks)
+  })
+
+  it('hides the tick whose label would overlap the limit marker', () => {
+    // carbon-carbon 1923 K sits at 0.783 of the bar; the 2000 K tick (0.818) is hidden
+    expect(visibleLegendTicks(1923.15)).toEqual([200, 800, 1400, 2400])
+    // titanium 673 K (0.215) is close to the 800 K tick (0.273)
+    expect(visibleLegendTicks(673.15)).toEqual([200, 1400, 2000, 2400])
+    // 1100 K (0.409) is at least 0.136 from every tick: nothing hidden
+    expect(visibleLegendTicks(1100)).toEqual(legendTicks)
+  })
+
+  it('uses the clamped position for limits outside the scale', () => {
+    expect(visibleLegendTicks(5000)).toEqual([200, 800, 1400, 2000])
   })
 })

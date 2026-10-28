@@ -1,7 +1,5 @@
-import { heatDomain, heatFraction, heatGradientCss } from '../lib/heatColor.js'
+import { heatDomain, heatFraction, heatGradientCss, visibleLegendTicks } from '../lib/heatColor.js'
 import { formatValue, kelvinToCelsius } from '../lib/units.js'
-
-const ticks = [heatDomain.min, 800, 1400, 2000, heatDomain.max]
 
 // Legend for the cool-to-hot temperature colour scale, with an optional
 // marker for the selected material's limit (limit: { temperature K, label }).
@@ -9,6 +7,7 @@ function HeatLegend({ title = 'Nose wall temperature (hot-wall)', limit }) {
   const span = heatDomain.max - heatDomain.min
   const limitPercent = limit ? heatFraction(limit.temperature) * 100 : null
   const outside = limit && (limit.temperature < heatDomain.min || limit.temperature > heatDomain.max)
+  const ticks = visibleLegendTicks(limit?.temperature)
   return (
     <div className="heatLegend">
       <div className="heatLegendTitle">{title}</div>

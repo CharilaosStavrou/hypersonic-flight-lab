@@ -38,3 +38,13 @@ export function heatGradientCss() {
   })
   return `linear-gradient(to right, ${stops.join(', ')})`
 }
+
+export const legendTicks = [heatDomain.min, 800, 1400, 2000, heatDomain.max] // K
+
+// Scale ticks whose labels stay readable next to the limit marker: a tick
+// within `minGap` (fraction of the bar width) of the limit is left out.
+export function visibleLegendTicks(limitTemperature, minGap = 0.12) {
+  if (limitTemperature === undefined || limitTemperature === null) return legendTicks
+  const limitFraction = heatFraction(limitTemperature)
+  return legendTicks.filter((t) => Math.abs(heatFraction(t) - limitFraction) >= minGap)
+}

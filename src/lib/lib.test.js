@@ -68,3 +68,20 @@ describe('chart scales', () => {
     ])
   })
 })
+
+describe('chartLayout', () => {
+  it('maps the data range onto the plot area', async () => {
+    const { chartLayout, chartSize, plotWidth } = await import('./chartLayout.js')
+    const layout = chartLayout([0, 10], [{ values: [0, 10] }], undefined, 0)
+    expect(layout.x(0)).toBe(chartSize.left)
+    expect(layout.x(10)).toBe(chartSize.left + plotWidth)
+    expect(layout.paths[0].startsWith('M58.0,')).toBe(true)
+    expect(layout.yTicks[0]).toBe(0)
+  })
+
+  it('includes the limit in the y range', async () => {
+    const { chartLayout } = await import('./chartLayout.js')
+    const layout = chartLayout([0, 1], [{ values: [1, 2] }], 95, 0)
+    expect(layout.yTicks.at(-1)).toBeGreaterThanOrEqual(95)
+  })
+})

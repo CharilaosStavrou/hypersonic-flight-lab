@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import LineChart from './LineChart.jsx'
 import { categoryRuns } from '../lib/chartScale.js'
 import { engineColors, engineLabels } from '../lib/engineStyle.js'
@@ -6,13 +7,26 @@ import { kelvinToCelsius, metresToKm, pascalToKpa, wattsToMw } from '../lib/unit
 
 const accent = '#3fb6ff'
 
-function ChartsPanel({ result }) {
-  const { samples, verdict } = result
+function buildSeries({ samples }) {
+  const values = (key, convert = (v) => v) => samples.map((s) => convert(s[key]))
   const times = samples.map((s) => s.time)
-  const series = (key, convert = (v) => v) => samples.map((s) => convert(s[key]))
-
   const runs = categoryRuns(times, samples.map((s) => s.engineMode))
-  const bands = runs.map((r) => ({ ...r, color: engineColors[r.value] }))
+  return {
+    times,
+    runs,
+    bands: runs.map((r) => ({ ...r, color: engineColors[r.value] })),
+    altitude: [{ label: 'Altitude', values: values('altitude', metresToKm), color: accent }],
+    mach: [{ label: 'Mach', values: values('mach'), color: accent }],
+    wall: [{ label: 'Nose wall temperature', values: values('wallTemperature', kelvinToCelsius), color: accent }],
+    q: [{ label: 'Dynamic pressure q', values: values('dynamicPressure', pascalToKpa), color: accent }],
+    heatFlux: [{ label: 'Heat flux qs', values: values('heatFlux', wattsToMw), color: accent }],
+  }
+}
+
+function ChartsPanel({ result, time }) {
+  const { verdict } = result
+  const data = useMemo(() => buildSeries(result), [result])
+  const { times, runs, bands } = data
   const legendModes = runs.some((r) => r.value === 'none') ? [...engineOrder, 'none'] : engineOrder
   const engineLegend = legendModes.map((mode) => (
     <span key={mode} className="legendItem">
@@ -23,13 +37,14 @@ function ChartsPanel({ result }) {
 
   return (
     <div className="charts">
-      <LineChart title="Altitude" unit="km" times={times} yMin={0} decimals={0} series={[{ label: 'Altitude', values: series('altitude', metresToKm), color: accent }]} />
-      <LineChart title="Mach and engine mode" times={times} yMin={0} decimals={1} bands={bands} legend={engineLegend} series={[{ label: 'Mach', values: series('mach'), color: accent }]} />
+      <LineChart title="Altitude" unit="km" times={times} yMin={0} decimals={0} series={data.altitude} cursorTime={time} />
+      <LineChart title="Mach and engine mode" times={times} yMin={0} decimals={1} bands={bands} legend={engineLegend} series={data.mach} cursorTime={time} />
       <LineChart
         title="Nose wall temperature (hot-wall)"
         unit="°C"
         times={times}
-        series={[{ label: 'Nose wall temperature', values: series('wallTemperature', kelvinToCelsius), color: accent }]}
+        series={data.wall}
+        cursorTime={time}
         limit={{ value: kelvinToCelsius(verdict.materialLimit), label: `${verdict.materialName} limit` }}
       />
       <LineChart
@@ -37,10 +52,11 @@ function ChartsPanel({ result }) {
         unit="kPa"
         times={times}
         yMin={0}
-        series={[{ label: 'Dynamic pressure q', values: series('dynamicPressure', pascalToKpa), color: accent }]}
+        series={data.q}
+        cursorTime={time}
         limit={{ value: pascalToKpa(verdict.maxDynamicPressure), label: 'q limit' }}
       />
-      <LineChart title="Nose heat flux (Sutton–Graves, cold-wall)" unit="MW/m²" times={times} yMin={0} decimals={2} series={[{ label: 'Heat flux qs', values: series('heatFlux', wattsToMw), color: accent }]} />
+      <LineChart title="Nose heat flux (Sutton–Graves, cold-wall)" unit="MW/m²" times={times} yMin={0} decimals={2} series={data.heatFlux} cursorTime={time} />
     </div>
   )
 }

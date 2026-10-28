@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { createEarthTexture } from './earthTexture.js'
 import { flightPathPoints, latLonToVector, sceneRadius } from './geo3d.js'
+import { sampleAt } from '../lib/sampleAt.js'
 import {
   createAircraftMarker,
   createAtmosphere,
@@ -106,19 +107,17 @@ export class EarthScene {
     this.controls.update()
   }
 
-  // Places the aircraft at time t (clamped to the flight), oriented along the path.
+  // Places the aircraft at time t (interpolated, clamped to the flight),
+  // oriented along the path between t − 1 s and t + 1 s.
   setTime(time) {
     this.time = time
-    const samples = this.samples
-    if (samples.length === 0) return
-    let i = samples.findIndex((s) => s.time >= time)
-    if (i === -1) i = samples.length - 1
-    const position = (s) =>
-      new THREE.Vector3(...latLonToVector(s.latitude, s.longitude, sceneRadius(s.altitude, this.exaggeration)))
-    const current = position(samples[i])
-    const before = position(samples[Math.max(0, i - 1)])
-    const after = position(samples[Math.min(samples.length - 1, i + 1)])
-    const direction = after.sub(before)
+    if (this.samples.length === 0) return
+    const positionAt = (t) => {
+      const s = sampleAt(this.samples, t)
+      return new THREE.Vector3(...latLonToVector(s.latitude, s.longitude, sceneRadius(s.altitude, this.exaggeration)))
+    }
+    const current = positionAt(time)
+    const direction = positionAt(time + 1).sub(positionAt(time - 1))
     // At rest (no movement) point the cone along the local vertical.
     if (direction.lengthSq() < 1e-14) direction.copy(current).normalize()
     this.aircraft.position.copy(current)

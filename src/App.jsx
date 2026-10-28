@@ -1,16 +1,22 @@
-import { lazy, Suspense, useMemo, useState } from 'react'
+import { memo, useMemo } from 'react'
 import ChartsPanel from './components/ChartsPanel.jsx'
 import Header from './components/Header.jsx'
 import Notes from './components/Notes.jsx'
+import ScenarioPanel from './components/ScenarioPanel.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import SummaryCards from './components/SummaryCards.jsx'
 import Verdict from './components/Verdict.jsx'
-import ViewTabs from './components/ViewTabs.jsx'
-import { createDefaultModel } from './data/defaults.js'
+import ViewPanel from './components/ViewPanel.jsx'
+import { sampleAt } from './lib/sampleAt.js'
+import { useModelState } from './lib/useModelState.js'
+import { usePlayback } from './lib/usePlayback.js'
 import { simulateFlight } from './physics/simulation.js'
 
-const EarthView = lazy(() => import('./components/EarthView.jsx'))
-const AircraftView = lazy(() => import('./components/AircraftView.jsx'))
+// Parts that do not depend on the timeline skip re-rendering during playback.
+const StaticSidebar = memo(Sidebar)
+const StaticVerdict = memo(Verdict)
+const StaticCards = memo(SummaryCards)
+const StaticNotes = memo(Notes)
 
 function runSimulation(model) {
   try {
@@ -21,21 +27,27 @@ function runSimulation(model) {
 }
 
 function App() {
-  const [model, setModel] = useState(createDefaultModel)
-  const [view, setView] = useState('earth')
+  const store = useModelState()
+  const { model, scenarios } = store
   const { result, error } = useMemo(() => runSimulation(model), [model])
-
-  const updateModel = (key, value) => setModel((current) => ({ ...current, [key]: value }))
-
-  function startNew() {
-    if (window.confirm('Replace the current model with the default model?')) setModel(createDefaultModel())
-  }
+  const start = result?.samples[0].time ?? 0
+  const end = result?.samples[result.samples.length - 1].time ?? 0
+  const playback = usePlayback(start, end)
+  const state = result ? sampleAt(result.samples, playback.time) : null
 
   return (
     <div className="app">
-      <Header onNew={startNew} />
+      <Header onLoadSample={store.loadSample} onNew={store.startNew} onExport={store.exportFile} onImportFile={store.importFile} />
+      {store.fileError && (
+        <div className="errorBanner fileError" role="alert">
+          <pre>{store.fileError}</pre>
+          <button type="button" className="iconButton" onClick={store.clearFileError} aria-label="Dismiss">
+            ×
+          </button>
+        </div>
+      )}
       <div className="layout">
-        <Sidebar model={model} onChange={updateModel} />
+        <StaticSidebar model={model} onChange={store.updateModel} />
         <main className="results">
           {error && (
             <div className="errorBanner" role="alert">
@@ -45,20 +57,16 @@ function App() {
           )}
           {result && (
             <>
-              <Verdict result={result} />
-              <SummaryCards result={result} />
-              <section aria-label="3D view">
-                <ViewTabs active={view} onChange={setView} />
-                <Suspense fallback={<div className="view3d viewLoading">Loading 3D view…</div>}>
-                  {view === 'earth' ? (
-                    <EarthView result={result} route={model.route} />
-                  ) : (
-                    <AircraftView result={result} vehicle={model.vehicle} />
-                  )}
-                </Suspense>
-              </section>
-              <Notes notes={result.notes} />
-              <ChartsPanel result={result} />
+              <StaticVerdict result={result} />
+              <StaticCards result={result} />
+              <ViewPanel model={model} result={result} state={state} playback={playback} />
+              <StaticNotes notes={result.notes} />
+              <ChartsPanel result={result} time={playback.time} />
+              <ScenarioPanel
+                scenarios={scenarios}
+                onSave={(name) => store.saveScenario(name, result)}
+                onDelete={store.deleteScenario}
+              />
             </>
           )}
         </main>

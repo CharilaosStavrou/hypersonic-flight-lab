@@ -1,12 +1,10 @@
-function Header({ onNew }) {
+import FileButtons from './FileButtons.jsx'
+
+function Header(props) {
   return (
     <header className="appHeader">
       <h1>Hypersonic Flight Lab</h1>
-      <div className="headerActions">
-        <button type="button" className="secondaryButton" onClick={onNew}>
-          New
-        </button>
-      </div>
+      <FileButtons {...props} />
     </header>
   )
 }

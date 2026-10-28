@@ -4,14 +4,10 @@ import { AircraftScene } from '../three/AircraftScene.js'
 import { formatValue, kelvinToCelsius } from '../lib/units.js'
 
 // True-scale aircraft close-up with the surface heat map. Loaded lazily.
-function AircraftView({ result, vehicle }) {
+function AircraftView({ result, vehicle, state }) {
   const containerRef = useRef(null)
   const sceneRef = useRef(null)
   const { length, wingspan, noseRadius } = vehicle
-
-  // Until the timeline exists, the heat map shows the moment of peak nose temperature.
-  const peak = result.peaks.wallTemperature
-  const sample = result.samples.find((s) => s.time === peak.time)
 
   useEffect(() => {
     const scene = new AircraftScene(containerRef.current)
@@ -27,19 +23,19 @@ function AircraftView({ result, vehicle }) {
   }, [length, wingspan, noseRadius])
 
   useEffect(() => {
-    sceneRef.current.setTemperatures(sample.wallTemperature, sample.temperature)
-  }, [sample])
+    sceneRef.current.setTemperatures(state.wallTemperature, state.temperature)
+  }, [state.wallTemperature, state.temperature])
 
   return (
     <div className="view3d">
       <div ref={containerRef} className="viewCanvas" />
       <div className="viewOverlay viewControls">
         <div className="sliderLabel">
-          Nose: {formatValue(kelvinToCelsius(sample.wallTemperature), 0, '°C')}{' '}
+          Nose: {formatValue(kelvinToCelsius(state.wallTemperature), 0, '°C')}{' '}
           <span className="visualOnly">physics-based</span>
         </div>
         <div className="hint">
-          Hot-wall stagnation-point value at t = {formatValue(sample.time, 0)} s (peak). Leading edges and the rest of
+          Hot-wall stagnation-point value at t = {formatValue(state.time, 0)} s. Leading edges and the rest of
           the surface use an illustrative falloff from the nose value, not computed heating.
         </div>
       </div>

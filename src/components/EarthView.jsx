@@ -4,7 +4,7 @@ import { EarthScene } from '../three/EarthScene.js'
 
 // 3D Earth with the flight path. Loaded lazily (Three.js and the map data
 // are in a separate chunk).
-function EarthView({ result, route }) {
+function EarthView({ result, route, time }) {
   const containerRef = useRef(null)
   const sceneRef = useRef(null)
   const [exaggeration, setExaggeration] = useState(50)
@@ -20,11 +20,12 @@ function EarthView({ result, route }) {
   }, [])
 
   useEffect(() => {
-    const scene = sceneRef.current
-    scene.setFlight(result, route, exaggeration)
-    // Without a timeline yet, the aircraft is shown at the end of the flight.
-    scene.setTime(result.samples[result.samples.length - 1].time)
+    sceneRef.current.setFlight(result, route, exaggeration)
   }, [result, route, exaggeration])
+
+  useEffect(() => {
+    sceneRef.current.setTime(time)
+  }, [time, result, exaggeration])
 
   useEffect(() => {
     sceneRef.current.setFollow(follow)
