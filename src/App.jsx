@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import ChartsPanel from './components/ChartsPanel.jsx'
 import Header from './components/Header.jsx'
 import Notes from './components/Notes.jsx'
@@ -7,6 +7,8 @@ import SummaryCards from './components/SummaryCards.jsx'
 import Verdict from './components/Verdict.jsx'
 import { createDefaultModel } from './data/defaults.js'
 import { simulateFlight } from './physics/simulation.js'
+
+const EarthView = lazy(() => import('./components/EarthView.jsx'))
 
 function runSimulation(model) {
   try {
@@ -42,6 +44,9 @@ function App() {
             <>
               <Verdict result={result} />
               <SummaryCards result={result} />
+              <Suspense fallback={<div className="view3d viewLoading">Loading 3D view…</div>}>
+                <EarthView result={result} route={model.route} />
+              </Suspense>
               <Notes notes={result.notes} />
               <ChartsPanel result={result} />
             </>

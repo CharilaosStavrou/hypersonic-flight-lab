@@ -479,3 +479,117 @@ select {
   stroke-width: 1.5;
   stroke-dasharray: 6 4;
 }
+
+/* 3D views */
+
+.view3d {
+  position: relative;
+  flex-shrink: 0;
+  height: 480px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #05080d;
+}
+
+.viewLoading {
+  display: grid;
+  place-items: center;
+  color: var(--textMuted);
+}
+
+.viewCanvas {
+  position: absolute;
+  inset: 0;
+}
+
+.viewCanvas canvas {
+  display: block;
+}
+
+.viewOverlay {
+  position: absolute;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(11, 15, 23, 0.82);
+  font-size: 0.78rem;
+}
+
+.viewControls {
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 270px;
+}
+
+.viewControls input[type='range'] {
+  accent-color: var(--accent);
+}
+
+.sliderLabel {
+  color: var(--text);
+}
+
+.visualOnly {
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--panelRaised);
+  color: var(--textMuted);
+  font-size: 0.7rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.checkboxLabel input {
+  accent-color: var(--accent);
+}
+
+.viewLegend {
+  right: 10px;
+  bottom: 10px;
+  width: 260px;
+}
+
+.viewHint {
+  left: 10px;
+  bottom: 10px;
+  color: var(--textMuted);
+}
+
+.heatLegendTitle {
+  margin-bottom: 6px;
+}
+
+.heatLegendBar {
+  height: 10px;
+  border-radius: 3px;
+}
+
+.heatLegendTicks {
+  position: relative;
+  height: 16px;
+  margin: 0 8px;
+  font-size: 0.7rem;
+  color: var(--textMuted);
+  font-variant-numeric: tabular-nums;
+}
+
+.heatLegendTicks span {
+  position: absolute;
+  top: 2px;
+  transform: translateX(-50%);
+}
+
+.heatLegendUnit {
+  font-size: 0.68rem;
+  color: var(--textMuted);
+}
