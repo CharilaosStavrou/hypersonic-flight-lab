@@ -63,10 +63,7 @@ export function geopotentialToGeometric(geopotentialHeight) {
 }
 
 function findLayer(geopotentialHeight) {
-  for (let i = layers.length - 1; i >= 0; i -= 1) {
-    if (geopotentialHeight >= layers[i].baseHeight) return layers[i]
-  }
-  return layers[0]
+  return layers.findLast((layer) => geopotentialHeight >= layer.baseHeight)
 }
 
 export function isAltitudeInRange(geometricAltitude) {
