@@ -108,29 +108,38 @@ export function simulateFlight(model) {
   const notes = []
 
   // Ground distance: s = ∫ v × R ÷ (R + h) dt, trapezoidal rule at 1 s steps.
-  // The position is held at the end point once s reaches the route length.
+  // The flight ends on arrival: the crossing time inside the last step is found
+  // by linear interpolation of s, and the rest of the profile is not flown.
+  const times = sampleTimes(model.profile)
+  const samples = []
   let distanceFlown = 0
   let previous = null
-  let routeEndTime = null
-  const samples = sampleTimes(model.profile).map((time) => {
-    const state = flightState(model, time)
-    const rate = groundSpeed(state.velocity, state.altitude)
+  let arrivalTime = null
+  for (const time of times) {
+    let state = flightState(model, time)
+    let rate = groundSpeed(state.velocity, state.altitude)
     if (previous) {
-      const before = distanceFlown
-      distanceFlown += 0.5 * (previous.rate + rate) * (time - previous.time)
-      if (routeEndTime === null && distanceFlown >= routeDistance && before < routeDistance) {
-        routeEndTime = time
+      const step = 0.5 * (previous.rate + rate) * (time - previous.time)
+      if (distanceFlown + step >= routeDistance) {
+        const fraction = (routeDistance - distanceFlown) / step
+        arrivalTime = previous.time + fraction * (time - previous.time)
+        state = flightState(model, arrivalTime)
+        distanceFlown = routeDistance
+        samples.push({ ...state, groundDistance: routeDistance, latitude: endLat, longitude: endLon })
+        break
       }
+      distanceFlown += step
     }
     previous = { time, rate }
-    const fraction = routeDistance > 0 ? Math.min(1, distanceFlown / routeDistance) : 0
+    const fraction = distanceFlown / routeDistance
     const position = intermediatePoint(startLat, startLon, endLat, endLon, fraction)
-    return { ...state, groundDistance: Math.min(distanceFlown, routeDistance), ...position }
-  })
+    samples.push({ ...state, groundDistance: distanceFlown, ...position })
+  }
 
-  if (routeEndTime !== null) {
+  const profileEnd = times[times.length - 1]
+  if (arrivalTime !== null && arrivalTime < profileEnd) {
     notes.push(
-      `The route (${(routeDistance / 1000).toFixed(0)} km) is shorter than the distance flown (${(distanceFlown / 1000).toFixed(0)} km): the aircraft stops at the end point at t = ${routeEndTime} s; the profile is still evaluated after that`,
+      `Arrived at the end point (${(routeDistance / 1000).toFixed(0)} km) at t = ${arrivalTime.toFixed(1)} s: the simulation ends there and the remaining profile (t = ${arrivalTime.toFixed(1)}–${profileEnd} s) was not flown`,
     )
   }
   notes.push(...engineNotes(samples, model.engineRanges))
@@ -167,7 +176,7 @@ export function simulateFlight(model) {
     flightTime: last.time - samples[0].time,
     distanceFlown,
     routeDistance,
-    routeEndTime,
+    arrivalTime,
     notes,
   }
 }

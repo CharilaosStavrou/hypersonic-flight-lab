@@ -20,6 +20,7 @@ describe('validateModel', () => {
   it.each([
     ['latitude out of range', (m) => (m.route.startLat = 91), /Start latitude/],
     ['antipodal route', (m) => (m.route = { startLat: 10, startLon: 20, endLat: -10, endLon: -160 }), /antipodal/],
+    ['identical start and end', (m) => (m.route = { startLat: 10, startLon: 20, endLat: 10, endLon: 20 }), /must be different/],
     ['one keyframe', (m) => (m.profile = [m.profile[0]]), /at least two keyframes/],
     ['altitude above 86 km', (m) => (m.profile[1].altitude = 90000), /0 and 86 km/],
     ['negative Mach', (m) => (m.profile[1].mach = -1), /Mach must be ≥ 0/],

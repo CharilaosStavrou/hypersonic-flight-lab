@@ -7,6 +7,7 @@ const isNumber = (value) => typeof value === 'number' && Number.isFinite(value)
 
 function validateRoute(route, errors) {
   const { startLat, startLon, endLat, endLon } = route ?? {}
+  const errorCount = errors.length
   for (const [name, value, limit] of [
     ['Start latitude', startLat, 90],
     ['End latitude', endLat, 90],
@@ -17,7 +18,10 @@ function validateRoute(route, errors) {
       errors.push(`${name} must be a number between −${limit} and ${limit}°`)
     }
   }
-  if (errors.length === 0 && Math.PI - centralAngle(startLat, startLon, endLat, endLon) < 1e-6) {
+  if (errors.length > errorCount) return
+  const angle = centralAngle(startLat, startLon, endLat, endLon)
+  if (angle < 1e-6) errors.push('Start and end must be different points')
+  if (Math.PI - angle < 1e-6) {
     errors.push('Start and end are antipodal: the great circle between them is not unique')
   }
 }

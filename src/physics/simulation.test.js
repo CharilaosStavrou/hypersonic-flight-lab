@@ -37,24 +37,28 @@ describe('simulateFlight – sampling and integration', () => {
     const last = result.samples[100]
     const flown = greatCircleDistance(51.5074, -0.1278, last.latitude, last.longitude)
     expect(flown / result.distanceFlown).toBeCloseTo(1, 6)
-    expect(result.routeEndTime).toBeNull()
+    expect(result.arrivalTime).toBeNull()
   })
 
-  it('stops at the end point when the route is shorter than the distance flown, and says so', () => {
-    // London → Paris (≈ 344 km) at ≈ 3 km/s is reached after ≈ 115 s
+  it('ends the simulation on arrival when the route is shorter than the profile, and says so', () => {
+    // London → Paris = 343.9 km on the sphere; at 3017.09 × 6371 ÷ 6401 = 3002.95 m/s
+    // arrival is at 343.9 km ÷ 3002.95 m/s ≈ 114.5 s, before the 200 s profile ends
     const result = simulateFlight(
       model({
         route: { startLat: 51.5074, startLon: -0.1278, endLat: 48.8566, endLon: 2.3522 },
         profile: [{ time: 0, altitude: 30000, mach: 10 }, { time: 200, altitude: 30000, mach: 10 }],
       }),
     )
-    expect(result.routeEndTime).toBeGreaterThan(110)
-    expect(result.routeEndTime).toBeLessThan(120)
+    const expectedArrival = result.routeDistance / 3002.95
+    expect(result.arrivalTime).toBeCloseTo(expectedArrival, 1)
+    expect(result.flightTime).toBeCloseTo(expectedArrival, 1)
     const last = result.samples.at(-1)
-    expect(last.latitude).toBeCloseTo(48.8566, 6)
-    expect(last.longitude).toBeCloseTo(2.3522, 6)
-    expect(last.groundDistance).toBeCloseTo(result.routeDistance, 6)
-    expect(result.notes.some((n) => n.includes('stops at the end point'))).toBe(true)
+    expect(last.time).toBe(result.arrivalTime)
+    expect(result.samples.at(-2).time).toBe(114)
+    expect(last).toMatchObject({ latitude: 48.8566, longitude: 2.3522 })
+    expect(last.groundDistance).toBe(result.routeDistance)
+    expect(result.distanceFlown).toBe(result.routeDistance)
+    expect(result.notes.some((n) => n.includes('remaining profile') && n.includes('was not flown'))).toBe(true)
   })
 })
 
@@ -122,11 +126,6 @@ describe('simulateFlight – edge cases', () => {
     const result = simulateFlight(model({ profile: [{ time: 0, altitude: 60000, mach: 12 }, { time: 5, altitude: 60000, mach: 14 }] }))
     expect(result.samples.at(-1).engineMode).toBe('none')
     expect(result.notes.some((n) => n.includes('outside every engine range'))).toBe(true)
-  })
-
-  it('stays at the start point on a zero-length route', () => {
-    const result = simulateFlight(model({ route: { startLat: 10, startLon: 20, endLat: 10, endLon: 20 } }))
-    expect(result.samples.at(-1)).toMatchObject({ latitude: 10, longitude: 20, groundDistance: 0 })
   })
 })
 
