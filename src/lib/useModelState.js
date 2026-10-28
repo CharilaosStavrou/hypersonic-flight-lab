@@ -5,15 +5,16 @@ import { parseModelFile, serializeModelFile } from './modelFile.js'
 import { createScenario } from './scenarios.js'
 import { loadSaved, save } from './storage.js'
 
+// loadId changes whenever a different model is loaded (sample, New, import).
 function initialState() {
-  return loadSaved() ?? { model: createDefaultModel(), scenarios: [] }
+  return { ...(loadSaved() ?? { model: createDefaultModel(), scenarios: [] }), loadId: 0 }
 }
 
 // Model and scenarios with auto-save and the header file actions.
 export function useModelState() {
   const [state, setState] = useState(initialState)
   const [fileError, setFileError] = useState(null)
-  const { model, scenarios } = state
+  const { model, scenarios, loadId } = state
 
   useEffect(() => {
     save(model, scenarios)
@@ -26,7 +27,7 @@ export function useModelState() {
 
   function replaceModel(next, question) {
     if (!window.confirm(question)) return
-    setState((s) => ({ ...s, model: next }))
+    setState((s) => ({ ...s, model: next, loadId: s.loadId + 1 }))
     setFileError(null)
   }
 
@@ -61,7 +62,7 @@ export function useModelState() {
       return
     }
     if (!window.confirm(`Replace the current model and scenarios with "${file.name}"?`)) return
-    setState({ model: parsed.model, scenarios: parsed.scenarios })
+    setState((s) => ({ model: parsed.model, scenarios: parsed.scenarios, loadId: s.loadId + 1 }))
     setFileError(null)
   }
 
@@ -72,6 +73,7 @@ export function useModelState() {
   return {
     model,
     scenarios,
+    loadId,
     fileError,
     clearFileError: () => setFileError(null),
     updateModel,

@@ -32,7 +32,8 @@ function App() {
   const { result, error } = useMemo(() => runSimulation(model), [model])
   const start = result?.samples[0].time ?? 0
   const end = result?.samples[result.samples.length - 1].time ?? 0
-  const playback = usePlayback(start, end)
+  // The timeline opens at the moment of peak nose temperature.
+  const playback = usePlayback(start, end, result?.peaks.wallTemperature.time ?? 0, store.loadId)
   const state = result ? sampleAt(result.samples, playback.time) : null
 
   return (

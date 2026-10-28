@@ -4,12 +4,22 @@ export const playbackSpeeds = [1, 10, 60]
 
 // Shared flight timeline: time (s), play/pause and speed (simulated seconds
 // per real second). The returned time is always clamped to [start, end].
-export function usePlayback(start, end) {
-  const [rawTime, setRawTime] = useState(end)
+// It starts at initialTime and returns there (paused) whenever resetKey
+// changes, i.e. when a different model is loaded.
+export function usePlayback(start, end, initialTime, resetKey) {
+  const [rawTime, setRawTime] = useState(initialTime)
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState(10)
-  // Playback position, written only by event handlers and animation frames.
-  const position = useRef(end)
+  const [currentKey, setCurrentKey] = useState(resetKey)
+  if (resetKey !== currentKey) {
+    // Adjusting state while rendering (React's documented pattern for resets).
+    setCurrentKey(resetKey)
+    setRawTime(initialTime)
+    setPlaying(false)
+  }
+  // Playback position, written only by event handlers and animation frames;
+  // togglePlay re-seeds it from the displayed time before playing.
+  const position = useRef(initialTime)
   const time = Math.min(end, Math.max(start, rawTime))
 
   useEffect(() => {
